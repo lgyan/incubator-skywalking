@@ -269,10 +269,19 @@ I will procedd to publish the release and send ANNOUNCE.
 ```
 
 ## Publish release
-1. Move source codes tar balls and distributions to `https://dist.apache.org/repos/dist/release/skywalking/`. e.g. `eg: svn mv ^/dev/incubator/skywalking/5.0.0-alpha ^/release/skywalking/`
-1. Do release in nexus staging repo.
-1. Public download URL under `http://www.apache.org/dyn/closer.cgi/skywalking/x.y.z`. These are under Apache mirror system.
-1. Send ANNOUNCE mail to `general@incubator.apache.org`.
+1. Move source codes tar balls and distributions to `https://dist.apache.org/repos/dist/release/incubator/skywalking/`.
+```
+> export SVN_EDITOR=vim
+> svn mv https://dist.apache.org/repos/dist/dev/incubator/skywalking/5.0.0-alpha https://dist.apache.org/repos/dist/release/incubator/skywalking
+....
+enter your apache password
+....
+
+```
+2. Do release in nexus staging repo.
+3. Public download URLs under `http://www.apache.org/dyn/closer.cgi/incubator/skywalking/x.y.z`.
+4. Public KEYS, sigs and sha512 URLs under `https://www.apache.org/dist/incubator/skywalking/xxxx`
+5. Send ANNOUNCE mail to `announce@incubator.apache.org`.
 ```
 Mail title: [ANNOUNCE] Release Apache SkyWalking (incubating) version x.y.z
 
@@ -285,9 +294,11 @@ SkyWalking: APM (application performance monitor) tool for distributed systems,
 especially designed for microservices, cloud native and container-based (Docker, Kubernetes, Mesos) architectures. 
 Underlying technology is a distributed tracing system.
 
-Download Links : http://www.apache.org/dyn/closer.cgi/skywalking/xxxx
+Download Links : http://skywalking.apache.org/downloads/
 
 Release Notes : https://github.com/apache/incubator-skywalking/blob/x.y.z/CHANGES.md
+
+Website: http://skywalking.apache.org/
 
 SkyWalking Resources:
 - Issue: https://github.com/apache/incubator-skywalking/issues

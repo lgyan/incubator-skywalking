@@ -54,7 +54,7 @@ import org.slf4j.LoggerFactory;
  */
 public class SegmentParse {
 
-    private final Logger logger = LoggerFactory.getLogger(SegmentParse.class);
+    private static final Logger logger = LoggerFactory.getLogger(SegmentParse.class);
 
     private final ModuleManager moduleManager;
     private List<SpanListener> spanListeners;
@@ -74,7 +74,7 @@ public class SegmentParse {
 
         try {
             List<UniqueId> traceIds = segment.getGlobalTraceIdsList();
-            TraceSegmentObject segmentObject = TraceSegmentObject.parseFrom(segment.getSegment());
+            TraceSegmentObject segmentObject = parseBinarySegment(segment);
 
             SegmentDecorator segmentDecorator = new SegmentDecorator(segmentObject);
 
@@ -95,6 +95,11 @@ public class SegmentParse {
             logger.error(e.getMessage(), e);
         }
         return false;
+    }
+
+    @GraphComputingMetric(name = "/segment/parse/parseBinarySegment")
+    private TraceSegmentObject parseBinarySegment(UpstreamSegment segment) throws InvalidProtocolBufferException {
+        return TraceSegmentObject.parseFrom(segment.getSegment());
     }
 
     @GraphComputingMetric(name = "/segment/parse/preBuild")
@@ -148,6 +153,7 @@ public class SegmentParse {
             if (spanDecorator.getSpanId() == 0) {
                 notifyFirstListener(spanDecorator, applicationId, applicationInstanceId, segmentId);
                 timeBucket = TimeBucketUtils.INSTANCE.getMinuteTimeBucket(spanDecorator.getStartTime());
+                spanDecorator.setStartTimeMinuteTimeBucket(timeBucket);
             }
 
             if (SpanType.Exit.equals(spanDecorator.getSpanType())) {
@@ -183,10 +189,12 @@ public class SegmentParse {
         graph.start(standardization);
     }
 
+    @GraphComputingMetric(name = "/segment/parse/notifyListenerToBuild")
     private void notifyListenerToBuild() {
         spanListeners.forEach(SpanListener::build);
     }
 
+    @GraphComputingMetric(name = "/segment/parse/notifyExitListener")
     private void notifyExitListener(SpanDecorator spanDecorator, int applicationId, int applicationInstanceId,
         String segmentId) {
         for (SpanListener listener : spanListeners) {
@@ -196,6 +204,7 @@ public class SegmentParse {
         }
     }
 
+    @GraphComputingMetric(name = "/segment/parse/notifyEntryListener")
     private void notifyEntryListener(SpanDecorator spanDecorator, int applicationId, int applicationInstanceId,
         String segmentId) {
         for (SpanListener listener : spanListeners) {
@@ -205,6 +214,7 @@ public class SegmentParse {
         }
     }
 
+    @GraphComputingMetric(name = "/segment/parse/notifyLocalListener")
     private void notifyLocalListener(SpanDecorator spanDecorator, int applicationId, int applicationInstanceId,
         String segmentId) {
         for (SpanListener listener : spanListeners) {
@@ -214,6 +224,7 @@ public class SegmentParse {
         }
     }
 
+    @GraphComputingMetric(name = "/segment/parse/notifyFirstListener")
     private void notifyFirstListener(SpanDecorator spanDecorator, int applicationId, int applicationInstanceId,
         String segmentId) {
         for (SpanListener listener : spanListeners) {
@@ -223,6 +234,7 @@ public class SegmentParse {
         }
     }
 
+    @GraphComputingMetric(name = "/segment/parse/notifyGlobalsListener")
     private void notifyGlobalsListener(UniqueId uniqueId) {
         for (SpanListener listener : spanListeners) {
             if (listener instanceof GlobalTraceIdsListener) {
@@ -231,6 +243,7 @@ public class SegmentParse {
         }
     }
 
+    @GraphComputingMetric(name = "/segment/parse/createSpanListeners")
     private void createSpanListeners() {
         listenerManager.getSpanListenerFactories().forEach(spanListenerFactory -> spanListeners.add(spanListenerFactory.create(moduleManager)));
     }

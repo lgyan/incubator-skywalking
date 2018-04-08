@@ -26,6 +26,7 @@ import org.apache.skywalking.apm.collector.analysis.segment.parser.define.listen
 import org.apache.skywalking.apm.collector.analysis.segment.parser.define.listener.FirstSpanListener;
 import org.apache.skywalking.apm.collector.analysis.segment.parser.define.listener.SpanListener;
 import org.apache.skywalking.apm.collector.analysis.segment.parser.define.listener.SpanListenerFactory;
+import org.apache.skywalking.apm.collector.core.annotations.trace.GraphComputingMetric;
 import org.apache.skywalking.apm.collector.core.graph.Graph;
 import org.apache.skywalking.apm.collector.core.graph.GraphManager;
 import org.apache.skywalking.apm.collector.core.module.ModuleManager;
@@ -40,7 +41,7 @@ import org.slf4j.LoggerFactory;
  */
 public class InstanceMappingSpanListener implements FirstSpanListener, EntrySpanListener {
 
-    private final Logger logger = LoggerFactory.getLogger(InstanceMappingSpanListener.class);
+    private static final Logger logger = LoggerFactory.getLogger(InstanceMappingSpanListener.class);
 
     private List<InstanceMapping> instanceMappings = new LinkedList<>();
     private long timeBucket;
@@ -63,7 +64,11 @@ public class InstanceMappingSpanListener implements FirstSpanListener, EntrySpan
     @Override
     public void parseFirst(SpanDecorator spanDecorator, int applicationId, int instanceId,
         String segmentId) {
-        timeBucket = TimeBucketUtils.INSTANCE.getMinuteTimeBucket(spanDecorator.getStartTime());
+        if (spanDecorator.getStartTimeMinuteTimeBucket() == 0) {
+            long startTimeMinuteTimeBucket = TimeBucketUtils.INSTANCE.getMinuteTimeBucket(spanDecorator.getStartTime());
+            spanDecorator.setStartTimeMinuteTimeBucket(startTimeMinuteTimeBucket);
+        }
+        timeBucket = spanDecorator.getStartTimeMinuteTimeBucket();
     }
 
     @Override public void build() {
@@ -78,6 +83,8 @@ public class InstanceMappingSpanListener implements FirstSpanListener, EntrySpan
     }
 
     public static class Factory implements SpanListenerFactory {
+
+        @GraphComputingMetric(name = "/segment/parse/createSpanListeners/instanceMappingSpanListener")
         @Override public SpanListener create(ModuleManager moduleManager) {
             return new InstanceMappingSpanListener();
         }
